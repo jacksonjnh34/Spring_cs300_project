@@ -10,12 +10,12 @@ class Worker extends Thread{
   int id;
   String passageName;
 
-  public Worker(String[] words,int id,ArrayBlockingQueue prefix, ArrayBlockingQueue results){
+  public Worker(String[] words,int id, ArrayBlockingQueue prefix, ArrayBlockingQueue results, String passageName){
     this.textTrieTree=new Trie(words);
     this.prefixRequestArray=prefix;
     this.resultsOutputArray=results;
     this.id=id;
-    this.passageName="Passage-"+Integer.toString(id)+".txt";//put name of passage here
+    this.passageName=passageName;//put name of passage here
   }
 
   public void run() {
