@@ -11,59 +11,111 @@ import edu.cs300.SearchRequest;
 
 public class PassageProcessor {
 
-    public static void main(String[] args)
-    {
-        //Does the file path point to root directory or what?
+    public static void main(String[] args) {
+        // Initialize/Declare data structures for later
         File inputPassages = new File("passages.txt");
         ArrayList<String[]> passageWords = new ArrayList<String[]>();
+        List<String> passages = new ArrayList<String>();
 
-        ArrayBlockingQueue prefixRequestArray;
-        ArrayBlockingQueue resultsOutputArray;
-
+        // Begin reading in the file paths for the passages from passages.txt located in
+        // root
         Scanner scan;
-        try 
-        {
+        try {
             scan = new Scanner(inputPassages);
-        } catch (FileNotFoundException e) 
-        {
+        } catch (FileNotFoundException e) {
+            // If file is not found, exit
             System.out.println("No input passages file found at: " + inputPassages);
             e.printStackTrace();
             return;
         }
 
-        while(scan.hasNextLine())
-        {
+        // Begin processing each individual passage and compile into String array of
+        // discrete words
+        while (scan.hasNextLine()) {
             String passageLocation = scan.nextLine();
+            passages.add(passageLocation);
 
-            if(passageLocation.length() > 1)
-            {
-                //2 Questions:
-                //How to handle punctuation? Do we just strip it?
-                //Do we convert to lower case (Assume yes)
+            if (passageLocation.length() > 1) {
+                // 2 Questions:
+                // How to handle punctuation? Do we just strip it?
+                // Do we convert to lower case (Assume yes)
                 Scanner wordScan;
-                try 
-                {
+                try {
                     wordScan = new Scanner(new File(passageLocation));
-                } catch (FileNotFoundException e) 
-                {
+                } catch (FileNotFoundException e) {
+                    // If file is not found, exit
                     System.out.println("No passage file found at: " + passageLocation);
                     e.printStackTrace();
                     return;
                 }
-                
+
+                // Read in each line of file (allows for multi-line passage processing)
                 List<String> lines = new ArrayList<String>();
-                while(wordScan.hasNextLine())
-                {
-                    lines.add(wordScan.nextLine().replaceAll("[^a-zA-Z ]", "").toLowerCase());
+                while (wordScan.hasNext()) {
+                    // Strip punctuation from text and convert all chars to lower case for coherent
+                    // trie constructiion
+                    lines.add(wordScan.next().replaceAll("(\\w*'\\w+|\\w+'\\w*)", "").replaceAll("[^a-zA-Z ]", "").toLowerCase());
                 }
 
+                // Convert lines ArrayList into a simple array of words, then add to the
+                // ArrayList of passageWords
                 String[] words = lines.toArray(new String[0]);
                 passageWords.add(words);
             }
-
         }
+        // Fucntionally, this is just a preprocessing step so that we don't have to
+        // process each passage whenever a new worker thread is created
 
         scan.close();
+
+        // Is there an optimal value for the capacity of this? .put() just waits to add
+        // to queue if full but still
+        ArrayBlockingQueue[] prefixRequestArrays = new ArrayBlockingQueue[passageWords.size()];
+        ArrayBlockingQueue resultsOutputArray = new ArrayBlockingQueue(passageWords.size() * 10);
+
+        for (int i = 0; i < passageWords.size(); i++) {
+            prefixRequestArrays[i] = new ArrayBlockingQueue<SearchRequest>(passageWords.size());
+            /*
+            try {
+                prefixRequestArrays[i].put(new SearchRequest(1, "pre"));
+            } catch (InterruptedException e) {}
+            */
+        }
+        
+
+        for (int i = 0; i < passageWords.size(); i++) {
+            new Worker(passageWords.get(i), i, prefixRequestArrays[i], resultsOutputArray, passages.get(i)).start();
+        }
+
+        int resultsArrSizeTemp = resultsOutputArray.size();
+        boolean managerExit = false;
+        while (!managerExit) 
+        {
+            SearchRequest request = MessageJNI.readPrefixRequestMsg();
+            System.out.println("**prefix(" + request.requestID + ") " + request.prefix + " received");
+
+            if(request.requestID == 0)
+            {
+                managerExit = true;
+            }
+            else
+            {
+                try {
+                    for(int i = 0; i < passageWords.size(); i++)
+                    {
+                            prefixRequestArrays[i].put(request);
+                    }
+                } catch (InterruptedException e) {}
+
+                
+            }
+            
+            
+        }
+
+        System.out.println("Terminating...");
+    }
+      
 
 /*
         for(int i = 0; i < passageWords.size(); i++)
@@ -77,5 +129,4 @@ public class PassageProcessor {
         }
 */
 
-    }
 }

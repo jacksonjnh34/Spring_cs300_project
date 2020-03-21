@@ -5,10 +5,11 @@ import java.util.HashMap;
 /* One node in the trie. Most of the logic of the trie is implemented
  * in this class.
  */
-public class TrieNode {
+public class TrieNode{
     /* The children of this node in the trie.*/
     private HashMap<Character, TrieNode> children;
     private boolean terminates = false;
+    private String actualWord = null;
 
     // The character stored in this node as data.
     private char character;	
@@ -51,7 +52,7 @@ public class TrieNode {
         if (word.length() > 1) {
             child.addWord(word.substring(1));
         } else {
-        	child.setTerminates(true);
+            child.setTerminates(true);
         }
     }
 
@@ -60,6 +61,16 @@ public class TrieNode {
      */
     public TrieNode getChild(char c) {
     	return children.get(c);
+    }
+
+    public void setActualWord(String word)
+    {
+        this.actualWord = word;
+    }
+
+    public String getActualWord()
+    {
+        return this.actualWord;
     }
 
     /* Returns whether this node represents the end of a complete word. */
@@ -71,4 +82,9 @@ public class TrieNode {
     public void setTerminates(boolean t) {
     	terminates = t;
     }
+
+    public HashMap<Character, TrieNode> getChildren() {
+        return this.children;
+    }
+
 }
