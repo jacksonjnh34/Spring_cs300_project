@@ -20,8 +20,8 @@ public class ParallelTextSearch{
        workers[i]=new ArrayBlockingQueue(10);
     }
 
-    new Worker(samples[0],0,workers[0],resultsOutputArray, "sample1.txt").start();
-    new Worker(samples[1],1,workers[1],resultsOutputArray, "sample2.txt").start();
+    new Worker(samples[0],0,workers[0],resultsOutputArray, "sample1.txt", 2).start();
+    new Worker(samples[1],1,workers[1],resultsOutputArray, "sample2.txt", 2).start();
 
     try {
       workers[0].put(args[0]);

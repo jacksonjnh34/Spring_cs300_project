@@ -4,9 +4,7 @@ import CtCILibrary.*;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.Map; 
 import java.util.concurrent.*;
 
 class Worker extends Thread{
@@ -16,14 +14,16 @@ class Worker extends Thread{
   ArrayBlockingQueue resultsOutputArray;
   int id;
   String passageName;
+  int totalPassages;
 
-  public Worker(String[] words,int id, ArrayBlockingQueue prefix, ArrayBlockingQueue results, String passageName){
+  public Worker(String[] words,int id, ArrayBlockingQueue prefix, ArrayBlockingQueue results, String passageName, int totalPassages){
     this.textTrieTree=new Trie(words);
     //System.out.println("Length of words arr in worker: " + words.length);
     this.prefixRequestArray=prefix;
     this.resultsOutputArray=results;
     this.id=id;
-    this.passageName=passageName;//put name of passage here
+    this.passageName=passageName; //put name of passage here
+    this.totalPassages = totalPassages;
   }
 
   public void run() {
@@ -37,7 +37,10 @@ class Worker extends Thread{
         if (!found)
         {
           System.out.println("Worker-"+this.id+" "+prefix.requestID+":"+ prefix+" ==> not found ");
-          resultsOutputArray.put(passageName+":"+prefix+" not found");
+          //System.out.println("msgsnd Reply " + this.id + " of " + this.totalPassages + " on " + prefix.requestID + ":" + prefix.prefix +
+          //                   " from " + this.passageName + " present=0 lw=----(len=4) msglen=144");
+
+          MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
         } 
         else
         {
@@ -61,9 +64,12 @@ class Worker extends Thread{
             currentNode = queue.pop();
             if(!currentNode.terminates())
             {
+              //Loop through all children of current operating node
               for(TrieNode children : currentNode.getChildren().values())
               {
+                //Add children to queue
                 queue.push(children);
+                //Mark each child as having a parent current node, useful for later BFS navigation
                 bfsMap.put(children, currentNode);
               }
             }
@@ -83,8 +89,11 @@ class Worker extends Thread{
           //This just adds the prefix to the discovered longest word
           longestWord = prefix.prefix.substring(0, prefix.prefix.length()-1) + longestWord;
 
-          System.out.println("Worker-"+this.id+" "+prefix.requestID+":"+ prefix+" ==> " + longestWord); //Need to add found word here
-          resultsOutputArray.put(passageName+":"+prefix+" found");
+          System.out.println("Worker-"+this.id+" "+prefix.requestID+":"+ prefix+" ==> " + longestWord);
+          //System.out.println("msgsnd Reply " + this.id + " of " + this.totalPassages + " on " + prefix.requestID + ":" + prefix.prefix +
+          //                   " from " + this.passageName + " present=0 lw=" + longestWord + "(len=" + longestWord.length() + ") msglen=144");
+
+          MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
         }
       } catch(InterruptedException e){
         System.out.println(e.getMessage());

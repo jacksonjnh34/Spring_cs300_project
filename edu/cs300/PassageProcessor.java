@@ -84,7 +84,7 @@ public class PassageProcessor {
         
 
         for (int i = 0; i < passageWords.size(); i++) {
-            new Worker(passageWords.get(i), i, prefixRequestArrays[i], resultsOutputArray, passages.get(i)).start();
+            new Worker(passageWords.get(i), i, prefixRequestArrays[i], resultsOutputArray, passages.get(i), passageWords.size()).start();
         }
 
         int resultsArrSizeTemp = resultsOutputArray.size();
@@ -106,7 +106,6 @@ public class PassageProcessor {
                             prefixRequestArrays[i].put(request);
                     }
                 } catch (InterruptedException e) {}
-
                 
             }
             
