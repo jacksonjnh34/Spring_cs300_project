@@ -28,7 +28,8 @@ class Worker extends Thread{
 
   public void run() {
     System.out.println("Worker-"+this.id+" ("+this.passageName+") thread started ...");
-    //while (true){
+    while (true)
+    {
       try {
         SearchRequest prefix=(SearchRequest)this.prefixRequestArray.take();
         boolean found = this.textTrieTree.contains(prefix.prefix);
@@ -40,7 +41,10 @@ class Worker extends Thread{
           //System.out.println("msgsnd Reply " + this.id + " of " + this.totalPassages + " on " + prefix.requestID + ":" + prefix.prefix +
           //                   " from " + this.passageName + " present=0 lw=----(len=4) msglen=144");
 
-          MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
+          //MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
+          String result = prefix.requestID + ":" + prefix.prefix + ":" + this.id + ":" + this.passageName + ":" + "----" + ":" + this.totalPassages + ":" + "0";
+          resultsOutputArray.put(result);
+
         } 
         else
         {
@@ -93,12 +97,15 @@ class Worker extends Thread{
           //System.out.println("msgsnd Reply " + this.id + " of " + this.totalPassages + " on " + prefix.requestID + ":" + prefix.prefix +
           //                   " from " + this.passageName + " present=0 lw=" + longestWord + "(len=" + longestWord.length() + ") msglen=144");
 
-          MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
+          //MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
+
+          String result = prefix.requestID + ":" + prefix.prefix + ":" + this.id + ":" + this.passageName + ":" + longestWord + ":" + this.totalPassages + ":" + "1";
+          resultsOutputArray.put(result);
         }
       } catch(InterruptedException e){
-        System.out.println(e.getMessage());
+        //System.out.println(e.getMessage());
       }
-    //}
+    }
   }
 
 }

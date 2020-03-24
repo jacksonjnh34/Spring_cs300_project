@@ -54,7 +54,8 @@ public class PassageProcessor {
                 while (wordScan.hasNext()) {
                     // Strip punctuation from text and convert all chars to lower case for coherent
                     // trie constructiion
-                    lines.add(wordScan.next().replaceAll("(\\w*'\\w+|\\w+'\\w*)", "").replaceAll("[^a-zA-Z ]", "").toLowerCase());
+                    lines.add(wordScan.next().replaceAll("(\\w*'\\w+|\\w+'\\w*)", "").replaceAll("[^a-zA-Z ]", "")
+                            .toLowerCase());
                 }
 
                 // Convert lines ArrayList into a simple array of words, then add to the
@@ -71,48 +72,63 @@ public class PassageProcessor {
         // Is there an optimal value for the capacity of this? .put() just waits to add
         // to queue if full but still
         ArrayBlockingQueue[] prefixRequestArrays = new ArrayBlockingQueue[passageWords.size()];
-        ArrayBlockingQueue resultsOutputArray = new ArrayBlockingQueue(passageWords.size() * 10);
+        ArrayBlockingQueue<String> resultsOutputArray = new ArrayBlockingQueue<String>(passageWords.size() * 10);
 
         for (int i = 0; i < passageWords.size(); i++) {
             prefixRequestArrays[i] = new ArrayBlockingQueue<SearchRequest>(passageWords.size());
             /*
-            try {
-                prefixRequestArrays[i].put(new SearchRequest(1, "pre"));
-            } catch (InterruptedException e) {}
-            */
+             * try { prefixRequestArrays[i].put(new SearchRequest(1, "pre")); } catch
+             * (InterruptedException e) {}
+             */
         }
-        
 
         for (int i = 0; i < passageWords.size(); i++) {
-            new Worker(passageWords.get(i), i, prefixRequestArrays[i], resultsOutputArray, passages.get(i), passageWords.size()).start();
+            new Worker(passageWords.get(i), i, prefixRequestArrays[i], resultsOutputArray, passages.get(i),
+                    passageWords.size()).start();
         }
 
         int resultsArrSizeTemp = resultsOutputArray.size();
         boolean managerExit = false;
-        while (!managerExit) 
-        {
+        while (!managerExit) {
+            // System.out.println("READ BUFFER");
+            
             SearchRequest request = MessageJNI.readPrefixRequestMsg();
+
             System.out.println("**prefix(" + request.requestID + ") " + request.prefix + " received");
 
-            if(request.requestID == 0)
+            if (request.requestID == 0) 
             {
                 managerExit = true;
-            }
-            else
+            } 
+            else 
             {
                 try {
-                    for(int i = 0; i < passageWords.size(); i++)
-                    {
-                            prefixRequestArrays[i].put(request);
+                    for (int i = 0; i < passageWords.size(); i++) {
+                        prefixRequestArrays[i].put(request);
                     }
                 } catch (InterruptedException e) {}
+
                 
+                for (int i = 0; i < passageWords.size(); i++) {
+                    String output[];
+                    try 
+                    {
+                        output = resultsOutputArray.take().split(":");
+                        System.out.println(Integer.parseInt(output[0]) + ":" + output[1] + ":" + Integer.parseInt(output[2]) + ":" + output[3] + ":" + output[4] + ":" + 
+                                           Integer.parseInt(output[5]) + ":" + Integer.parseInt(output[6]));
+                        MessageJNI.writeLongestWordResponseMsg(Integer.parseInt(output[0]), output[1], Integer.parseInt(output[2]), output[3], output[4], 
+                                                           Integer.parseInt(output[5]), Integer.parseInt(output[6]));
+                    } catch (InterruptedException e) 
+                    {
+                        output = null;
+                    }
+                }
             }
-            
             
         }
 
         System.out.println("Terminating...");
+        System.exit(0);
     }
       
 
