@@ -90,7 +90,6 @@ public class PassageProcessor {
         int resultsArrSizeTemp = resultsOutputArray.size();
         boolean managerExit = false;
         while (!managerExit) {
-            // System.out.println("READ BUFFER");
             
             SearchRequest request = MessageJNI.readPrefixRequestMsg();
 
@@ -114,8 +113,6 @@ public class PassageProcessor {
                     try 
                     {
                         output = resultsOutputArray.take().split(":");
-                        System.out.println(Integer.parseInt(output[0]) + ":" + output[1] + ":" + Integer.parseInt(output[2]) + ":" + output[3] + ":" + output[4] + ":" + 
-                                           Integer.parseInt(output[5]) + ":" + Integer.parseInt(output[6]));
                         MessageJNI.writeLongestWordResponseMsg(Integer.parseInt(output[0]), output[1], Integer.parseInt(output[2]), output[3], output[4], 
                                                            Integer.parseInt(output[5]), Integer.parseInt(output[6]));
                     } catch (InterruptedException e) 
@@ -130,18 +127,4 @@ public class PassageProcessor {
         System.out.println("Terminating...");
         System.exit(0);
     }
-      
-
-/*
-        for(int i = 0; i < passageWords.size(); i++)
-        {
-            System.out.println("PASSAGE " + i+1 + ": ");
-            for(int j = 0; j < passageWords.get(i).length; j++)
-            {
-                System.out.print(passageWords.get(i)[j] + " ");
-            }
-            System.out.println();
-        }
-*/
-
 }

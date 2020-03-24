@@ -49,7 +49,6 @@ int main(int argc, char**argv)
         exit(-1);
     }
     */
-    printf("ARGC SIZE: %d\n", argc);
 
     key_t key;
     char prefixes[argc-2][WORD_LENGTH];
@@ -58,7 +57,6 @@ int main(int argc, char**argv)
 
     for(int i = 0; i < argc-2; i++)
     {
-        printf("Adding prefix: %s\n", argv[i+2]);
         strlcpy(prefixes[i], argv[i+2], WORD_LENGTH);
     }
 
@@ -69,10 +67,6 @@ int main(int argc, char**argv)
         fprintf(stderr, "Value of errno: %d\n", errno);
         perror("(msgget)");
         fprintf(stderr, "Error msgget: %s\n", strerror( errnum ));
-    }
-    else
-    {
-        fprintf(stderr, "msgget: msgget succeeded: msgqid = %d\n", msqid);
     }
 
     for(int j = 0; j < argc-2; j++)
@@ -96,7 +90,7 @@ int main(int argc, char**argv)
         }
         else
         {
-            printf("Message(%d): \"%s\" Sent (%d bytes)\n", sbuf.id, sbuf.prefix,(int)buffer_len);
+            printf("Message(%d): \"%s\" Sent (%d bytes)\n\n", sbuf.id, sbuf.prefix,(int)buffer_len);
         }
 
         int ret;
@@ -136,63 +130,22 @@ int main(int argc, char**argv)
             }
         } while (((ret < 0 ) && (errno == 4)) || responsesRecieved < totalPassages);
 
+        printf("Report \"%s\"\n", sbuf.prefix);
         for(int k = 0; k < totalPassages; k++)
         {
             if (responses[k].present == 1)
             {
-                printf("%d, %d of %d, %s, size=%d\n", responses[k].mtype, responses[k].index, responses[k].count, responses[k].longest_word, responseSizes[k]);
+                printf("Passage %d - %s - %s\n", responses[k].index, responses[k].location_description, responses[k].longest_word);
             }
             else
             {
-                printf("%d, %d of %d, not found, size=%d\n", responses[k].mtype, responses[k].index, responses[k].count, responseSizes[k]);
+                printf("Passage %d - %s - no word found\n", responses[k].index, responses[k].location_description);
             }
                 
         }
 
-        //fprintf(stderr,"msgrcv error return code --%d:$d--",ret,errno);
-/*
-        int totalPassages = rbuf.count;
-        int responsesRecieved = 1;
+        printf("\n");
 
-        response_buf responses[totalPassages];
-        size_t responseSizes[totalPassages];
-        responses[rbuf.index] = rbuf;
-
-        do 
-        {
-            ret = msgrcv(msqid, &rbuf, sizeof(response_buf), 2, 0);//receive type 2 message
-            int errnum = errno;
-            if (ret < 0 && errno !=EINTR)
-            {
-                fprintf(stderr, "Value of errno: %d\n", errno);
-                perror("Error printed by perror");
-                fprintf(stderr, "Error receiving msg: %s\n", strerror( errnum ));
-            }
-            else
-            {
-                responses[rbuf.index] = rbuf;
-                responseSizes[rbuf.index] = ret;
-                printf("Longest word recieved: %s, with %d responses recieved of %d\n", rbuf.longest_word, responsesRecieved, totalPassages);
-                responsesRecieved++;
-            }
-        
-        } while ((ret < 0 ) && (errno == 4) && responsesRecieved != totalPassages);
-
-        for(int k = 0; k < argc-1; k++)
-        {
-            if (responses[k].present == 1)
-            {
-                printf("Longest word: %s\n", responses[k].longest_word );
-                //printf("%d, %d of %d, %s, size=%d\n", responses[k].mtype, responses[k].index, responses[k].count, responses[k].longest_word, responseSizes[k]);
-            }
-            else
-            {
-                printf("Longest word: %s\n", responses[k].longest_word );
-                //printf("%d, %d of %d, not found, size=%d\n", responses[k].mtype, responses[k].index, responses[k].count, responseSizes[k]);
-            }
-                
-        }
-    */
         sleep(atoi(argv[1]));
     
 
@@ -200,7 +153,7 @@ int main(int argc, char**argv)
 
     prefix_buf finalSBuf;
     finalSBuf.id = 0;
-    strlcpy(finalSBuf.prefix, "", WORD_LENGTH);
+    strlcpy(finalSBuf.prefix, "   ", WORD_LENGTH);
     finalSBuf.mtype = 1;
     size_t buffer_len = strlen(finalSBuf.prefix) + sizeof(int) + 1;
     if((msgsnd(msqid, &finalSBuf, buffer_len, IPC_NOWAIT)) < 0) 
@@ -216,6 +169,6 @@ int main(int argc, char**argv)
         printf("Message(%d): \"%s\" Sent (%d bytes)\n", finalSBuf.id, finalSBuf.prefix,(int)buffer_len);
     }
 
-    printf("Exiting ...");
+    printf("Exiting ...\n ");
 
 }
