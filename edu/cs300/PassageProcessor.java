@@ -36,9 +36,7 @@ public class PassageProcessor {
             passages.add(passageLocation);
 
             if (passageLocation.length() > 1) {
-                // 2 Questions:
-                // How to handle punctuation? Do we just strip it?
-                // Do we convert to lower case (Assume yes)
+                //Start scanning in words
                 Scanner wordScan;
                 try {
                     wordScan = new Scanner(new File(passageLocation));
@@ -53,9 +51,8 @@ public class PassageProcessor {
                 List<String> lines = new ArrayList<String>();
                 while (wordScan.hasNext()) {
                     // Strip punctuation from text and convert all chars to lower case for coherent
-                    // trie constructiion
-                    lines.add(wordScan.next().replaceAll("(\\w*'\\w+|\\w+'\\w*)", "").replaceAll("[^a-zA-Z ]", "")
-                            .toLowerCase());
+                    // trie constructiion. Also remove all contractions from the array
+                    lines.add(wordScan.next().replaceAll("(\\w*'\\w*|\\w*'\\w*)", "").replaceAll("[^a-zA-Z ]", "").toLowerCase());
                 }
 
                 // Convert lines ArrayList into a simple array of words, then add to the
@@ -75,39 +72,40 @@ public class PassageProcessor {
         ArrayBlockingQueue<String> resultsOutputArray = new ArrayBlockingQueue<String>(passageWords.size() * 10);
 
         for (int i = 0; i < passageWords.size(); i++) {
+            //Initialize the ArrayBlockingQueues for each to be created worker thread
             prefixRequestArrays[i] = new ArrayBlockingQueue<SearchRequest>(passageWords.size());
-            /*
-             * try { prefixRequestArrays[i].put(new SearchRequest(1, "pre")); } catch
-             * (InterruptedException e) {}
-             */
         }
 
         for (int i = 0; i < passageWords.size(); i++) {
+            //Create a worker thread for each passage
             new Worker(passageWords.get(i), i, prefixRequestArrays[i], resultsOutputArray, passages.get(i),
                     passageWords.size()).start();
         }
 
-        int resultsArrSizeTemp = resultsOutputArray.size();
+        //Create a while loop to execute until prefix with ID=0 is recieved
         boolean managerExit = false;
         while (!managerExit) {
-            
+            //Read in prefix requests from SystemV message queue            
             SearchRequest request = MessageJNI.readPrefixRequestMsg();
 
-            System.out.println("**prefix(" + request.requestID + ") " + request.prefix + " received");
+            //Print out that the prefix has been recieved
+            System.out.print("**prefix(" + request.requestID + ") " + request.prefix + " received\n");
 
+            //Set to exit loop on id=0
             if (request.requestID == 0) 
             {
                 managerExit = true;
             } 
             else 
             {
+                //Try to place the prefix onto the ArrayBlockingQueue for the workers to take off and process
                 try {
                     for (int i = 0; i < passageWords.size(); i++) {
                         prefixRequestArrays[i].put(request);
                     }
                 } catch (InterruptedException e) {}
 
-                
+                //Write to the SystemV message queue for each passage after all the messages have been recieved
                 for (int i = 0; i < passageWords.size(); i++) {
                     String output[];
                     try 
@@ -124,6 +122,7 @@ public class PassageProcessor {
             
         }
 
+        //Exit and terminate program
         System.out.println("Terminating...");
         System.exit(0);
     }

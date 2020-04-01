@@ -18,7 +18,6 @@ class Worker extends Thread{
 
   public Worker(String[] words,int id, ArrayBlockingQueue prefix, ArrayBlockingQueue results, String passageName, int totalPassages){
     this.textTrieTree=new Trie(words);
-    //System.out.println("Length of words arr in worker: " + words.length);
     this.prefixRequestArray=prefix;
     this.resultsOutputArray=results;
     this.id=id;
@@ -37,11 +36,7 @@ class Worker extends Thread{
         
         if (!found)
         {
-          System.out.println("Worker-"+this.id+" "+prefix.requestID+":"+ prefix+" ==> not found ");
-          //System.out.println("msgsnd Reply " + this.id + " of " + this.totalPassages + " on " + prefix.requestID + ":" + prefix.prefix +
-          //                   " from " + this.passageName + " present=0 lw=----(len=4) msglen=144");
-
-          //MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
+          System.out.print("Worker-"+this.id+" "+prefix.requestID+":"+ prefix+" ==> not found \n");
           String result = prefix.requestID + ":" + prefix.prefix + ":" + this.id + ":" + this.passageName + ":" + "----" + ":" + this.totalPassages + ":" + "0";
           resultsOutputArray.put(result);
 
@@ -93,14 +88,10 @@ class Worker extends Thread{
           //This just adds the prefix to the discovered longest word
           longestWord = prefix.prefix.substring(0, prefix.prefix.length()-1) + longestWord;
 
-          System.out.println("Worker-"+this.id+" "+prefix.requestID+":"+ prefix+" ==> " + longestWord);
-          //System.out.println("msgsnd Reply " + this.id + " of " + this.totalPassages + " on " + prefix.requestID + ":" + prefix.prefix +
-          //                   " from " + this.passageName + " present=0 lw=" + longestWord + "(len=" + longestWord.length() + ") msglen=144");
-
-          //MessageJNI.writeLongestWordResponseMsg(prefix.requestID, prefix.prefix, this.id, this.passageName, null, this.totalPassages, 0);
-
+          System.out.print("Worker-"+this.id+" "+prefix.requestID+":"+ prefix+" ==> " + longestWord + "\n");
           String result = prefix.requestID + ":" + prefix.prefix + ":" + this.id + ":" + this.passageName + ":" + longestWord + ":" + this.totalPassages + ":" + "1";
           resultsOutputArray.put(result);
+                    
         }
       } catch(InterruptedException e){
         //System.out.println(e.getMessage());

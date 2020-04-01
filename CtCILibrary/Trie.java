@@ -15,7 +15,8 @@ public class Trie
     public Trie(ArrayList<String> list) {
         root = new TrieNode();
         for (String word : list) {
-            root.addWord(word);
+            if(word.length() < 100)
+                root.addWord(word);
         }
     }  
     
@@ -24,7 +25,8 @@ public class Trie
     public Trie(String[] list) {
         root = new TrieNode();
         for (String word : list) {
-            root.addWord(word);
+            if(word.length() < 100)
+                root.addWord(word);
         }
     }    
 
